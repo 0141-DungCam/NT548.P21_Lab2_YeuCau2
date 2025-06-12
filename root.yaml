@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Root Stack - Deploy the entire NT548.P21-Lab01 infrastructure using Nested Stacks
+Description: Root Stack - Deploy the entire NT548.P21-Lab02 infrastructure using Nested Stacks
 
 Parameters:
   AllowedSSHIP:
