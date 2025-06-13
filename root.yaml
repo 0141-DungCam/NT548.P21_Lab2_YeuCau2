@@ -65,6 +65,21 @@ Resources:
         AmiId: !Ref AmiId
       TimeoutInMinutes: 10
 
+  CodePipelineStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: [EC2Stack]
+    Properties:
+      TemplateURL: https://nt548-group10-cloudformation-new.s3.ap-southeast-1.amazonaws.com/codepipeline.yaml
+      Parameters:
+        GitHubOwner: !Ref GitHubOwner
+        GitHubRepo: !Ref GitHubRepo
+        GitHubBranch: !Ref GitHubBranch
+        GitHubOAuthToken: !Ref GitHubOAuthToken
+        ArtifactBucket: !Ref ArtifactBucket
+        PipelineRoleArn: !Ref PipelineRoleArn
+        CloudFormationRoleArn: !Ref CloudFormationRoleArn
+
+
 Outputs:
   PublicInstanceIP:
     Description: Public EC2 Instance IP
