@@ -40,7 +40,8 @@ Parameters:
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access
     Type: AWS::EC2::KeyPair::KeyName
-    Default: my-keypair
+    Default: nt548.p21_lab2_yeucau2
+
 
   InstanceType:
     Description: EC2 instance type
@@ -66,7 +67,7 @@ Resources:
       TemplateURL: https://nt548-group10-cloudformation-new.s3.ap-southeast-1.amazonaws.com/nat-gateway.yaml
       Parameters:
         PublicSubnetId: !GetAtt VPCStack.Outputs.PublicSubnetId
-        ProjectName: NT548-P21-Lab01
+        ProjectName: NT548-P21-Lab02
       TimeoutInMinutes: 10
 
   RouteTablesStack:

@@ -21,7 +21,7 @@ Resources:
   PublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !ImportValue NT548-P21-Lab01-PublicSubnetId
+      SubnetId: !ImportValue NT548-P21-Lab02-PublicSubnetId
       RouteTableId: !Ref PublicRouteTable
 
   PrivateRouteTable:
@@ -43,7 +43,7 @@ Resources:
   PrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !ImportValue NT548-P21-Lab01-PrivateSubnetId
+      SubnetId: !ImportValue NT548-P21-Lab02-PrivateSubnetId
       RouteTableId: !Ref PrivateRouteTable
 
 Outputs:
