@@ -2,6 +2,36 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Root Stack - Deploy the entire NT548.P21-Lab02 infrastructure using Nested Stacks
 
 Parameters:
+  GitHubOwner:
+    Type: String
+    Description: GitHub username
+
+  GitHubRepo:
+    Type: String
+    Description: GitHub repository name
+
+  GitHubBranch:
+    Type: String
+    Default: main
+    Description: GitHub branch
+
+  GitHubOAuthToken:
+    Type: String
+    NoEcho: true
+    Description: GitHub token
+
+  ArtifactBucket:
+    Type: String
+    Description: S3 bucket to store CodePipeline artifacts
+
+  PipelineRoleArn:
+    Type: String
+    Description: IAM role ARN for CodePipeline
+
+  CloudFormationRoleArn:
+    Type: String
+    Description: IAM role ARN for CloudFormation
+
   AllowedSSHIP:
     Description: The IP address allowed to SSH to the public EC2 instances
     Type: String
