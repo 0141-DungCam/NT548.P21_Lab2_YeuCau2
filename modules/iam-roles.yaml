@@ -44,6 +44,10 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                  - cloudformation:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
                   - ec2:*
                   - s3:*
                   - iam:PassRole
@@ -59,3 +63,4 @@ Outputs:
   CloudFormationRoleArn:
     Description: ARN of the CloudFormation execution role
     Value: !GetAtt CloudFormationExecutionRole.Arn
+    
