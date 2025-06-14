@@ -27,7 +27,7 @@ Tạo bucket mới (nếu chưa có):
 aws s3 mb s3://nt548-group10-cloudformation-new
 ```
 
-Upload các file module lên S3 (chạy từng lệnh):
+Upload các file module lên S3 bằng các dòng lệnh bên dưới:
 
 ```bash
 aws s3 cp modules/ec2.yaml s3://nt548-group10-cloudformation-new
@@ -45,7 +45,7 @@ Tạo project CodeBuild để tự động kiểm thử cfn-lint và taskcat th�
 ```bash
 aws codebuild create-project \
   --name nt548-group10-lab02-validation \
-  --source type=GITHUB,location=https://github.com/<Tên user Github của bạn>/NT548.P21_Lab2_YeuCau2.git,buildspec=buildspec.yml \
+  --source type=GITHUB,location=https://github.com/<Tên user Github>/NT548.P21_Lab2_YeuCau2.git,buildspec=buildspec.yml \
   --source-version main \
   --environment type=LINUX_CONTAINER,computeType=BUILD_GENERAL1_SMALL,image=aws/codebuild/standard:7.0 \
   --service-role arn:aws:iam::<Mã tài khoản AWS của bạn>:role/CodeBuildCloudFormationRole \
@@ -53,14 +53,14 @@ aws codebuild create-project \
 ```
 
 **Lưu ý:**  
-- Hãy thay thế `<Tên user Github của bạn>`, `<Mã tài khoản AWS của bạn>` bằng thông tin tương ứng của bạn.
+- Hãy thay thế `<Tên user Github>`, `<Mã tài khoản AWS của bạn>` bằng thông tin tương ứng của bạn.
 - Đảm bảo file `buildspec.yml` đã có trong repo và cấu hình cfn-lint, taskcat phù hợp.
 
 ---
 
 ## b. Triển khai AWS CodePipeline tự động hóa build & deploy từ mã nguồn
 
-### 1. Triển khai IAM roles (nếu chưa có)
+### 1. Triển khai IAM roles
 
 ```bash
 aws cloudformation deploy \
