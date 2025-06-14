@@ -1,73 +1,100 @@
 # NT548.P21_Lab2_YeuCau2
-# Triển khai hạ tầng AWS & Tự động hóa CI/CD với CloudFormation và CodePipeline
+# Triển khai tự động hóa kiểm thử & triển khai hạ tầng AWS với CodeBuild, CodePipeline
 
 Repository này chứa các file YAML dùng để:
 - Triển khai hạ tầng AWS bằng AWS CloudFormation.
-- Tự động hóa quy trình build và deploy ứng dụng với AWS CodePipeline.
+- Tự động hóa kiểm thử (lint, validate) template với AWS CodeBuild tích hợp cfn-lint, taskcat.
+- Tự động hóa build & deploy ứng dụng với AWS CodePipeline.
+
+---
 
 ## Yêu cầu
 
-- Tài khoản AWS với quyền đủ để tạo/điều chỉnh các dịch vụ (CloudFormation, S3, IAM, CodePipeline, CodeBuild, v.v.)
-- AWS CLI cài đặt trên máy tính cá nhân (tham khảo: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
-- Quyền truy cập IAM phù hợp cho các thao tác tạo stack, khởi tạo pipeline.
+- Tài khoản AWS với quyền đủ để tạo/điều chỉnh các dịch vụ (CloudFormation, S3, IAM, CodeBuild, CodePipeline, v.v.).
+- AWS CLI đã cài đặt trên máy cá nhân.
+- Đã cấu hình AWS CLI với quyền thích hợp (`aws configure`).
+- Đã tạo các role cần thiết trong IAM.
 
-## Hướng dẫn sử dụng
+---
 
-### 1. Cấu hình AWS CLI
+## a. Triển khai AWS CodeBuild tích hợp cfn-lint và taskcat
 
-Trước tiên, bạn cần cấu hình AWS CLI với Access Key và Secret Key:
+### 1. Tải các file CloudFormation template lên S3
+
+Tạo bucket mới (nếu chưa có):
 
 ```bash
-aws configure
+aws s3 mb s3://nt548-group10-cloudformation-new
 ```
 
-### 2. Triển khai hạ tầng bằng CloudFormation
-
-Chạy lệnh sau để tạo stack từ file YAML (ví dụ: infra.yaml):
+Upload các file module lên S3 (chạy từng lệnh):
 
 ```bash
-aws cloudformation create-stack \
-  --stack-name TenStackCuaBan \
-  --template-body file://infra.yaml \
-  --capabilities CAPABILITY_NAMED_IAM
+aws s3 cp modules/ec2.yaml s3://nt548-group10-cloudformation-new
+aws s3 cp modules/nat-gateway.yaml s3://nt548-group10-cloudformation-new
+aws s3 cp modules/route-tables.yaml s3://nt548-group10-cloudformation-new
+aws s3 cp modules/security-group.yaml s3://nt548-group10-cloudformation-new
+aws s3 cp modules/vpc.yaml s3://nt548-group10-cloudformation-new
+aws s3 cp modules/root.yaml s3://nt548-group10-cloudformation-new
+```
+
+### 2. Tạo AWS CodeBuild Project
+
+Tạo project CodeBuild để tự động kiểm thử cfn-lint và taskcat thông qua file buildspec.yml:
+
+```bash
+aws codebuild create-project \
+  --name nt548-group10-lab02-validation \
+  --source type=GITHUB,location=https://github.com/<Tên user Github của bạn>/NT548.P21_Lab2_YeuCau2.git,buildspec=buildspec.yml \
+  --source-version main \
+  --environment type=LINUX_CONTAINER,computeType=BUILD_GENERAL1_SMALL,image=aws/codebuild/standard:7.0 \
+  --service-role arn:aws:iam::<Mã tài khoản AWS của bạn>:role/CodeBuildCloudFormationRole \
+  --artifacts type=NO_ARTIFACTS
 ```
 
 **Lưu ý:**  
-- Thay đổi `infra.yaml` thành tên file template bạn muốn sử dụng.
-- Thêm tham số `--parameters` nếu template yêu cầu các biến đầu vào.
+- Hãy thay thế `<Tên user Github của bạn>`, `<Mã tài khoản AWS của bạn>` bằng thông tin tương ứng của bạn.
+- Đảm bảo file `buildspec.yml` đã có trong repo và cấu hình cfn-lint, taskcat phù hợp.
 
-Ví dụ:
+---
+
+## b. Triển khai AWS CodePipeline tự động hóa build & deploy từ mã nguồn
+
+### 1. Triển khai IAM roles (nếu chưa có)
 
 ```bash
-aws cloudformation create-stack \
-  --stack-name MyPipelineStack \
-  --template-body file://codepipeline.yaml \
-  --parameters ParameterKey=RepoName,ParameterValue=NT548.P21_Lab2_YeuCau2 \
+aws cloudformation deploy \
+  --template-file "modules/iam-roles.yaml" \
+  --stack-name "NT548-Lab2-B-IAM-Roles" \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-### 3. Quản lý stack
-
-- Xem danh sách stack:
-  ```bash
-  aws cloudformation list-stacks
-  ```
-- Xóa stack:
-  ```bash
-  aws cloudformation delete-stack --stack-name TenStackCuaBan
-  ```
-
-### 4. Giám sát và chạy CodePipeline
-
-Sau khi triển khai thành công, truy cập AWS Console để kiểm tra trạng thái CodePipeline hoặc sử dụng CLI:
+### 2. Triển khai CodePipeline
 
 ```bash
-aws codepipeline list-pipelines
-aws codepipeline get-pipeline-execution --pipeline-name TenPipelineCuaBan --pipeline-execution-id <execution-id>
+aws cloudformation deploy \
+  --template-file "modules/codepipeline.yaml" \
+  --stack-name "NT548-Lab2-B-CodePipeline" \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides \
+    GitHubOwner=<Tên user Github> \
+    GitHubRepo=<Tên Repo github chứa mã nguồn> \
+    GitHubBranch=main \
+    GitHubOAuthToken=<Personal Access Token Github> \
+    ArtifactBucket=nt548-group10-cloudformation-new \
+    PipelineRoleArn=arn:aws:iam::<Mã tài khoản AWS>:role/NT548-CodePipelineRole \
+    CloudFormationRoleArn=arn:aws:iam::<Mã tài khoản AWS>:role/NT548-CloudFormationExecutionRole
 ```
+**Lưu ý:**  
+- Hãy thay thế `<Tên user Github>`, `<Personal Access Token Github>`, `<Tên Repo github chứa mã nguồn> ` , `<Mã tài khoản AWS>` bằng thông tin thực tế của bạn.
+- Đảm bảo các Role đã tồn tại trong IAM.
 
-## Tham khảo
+---
 
-- [AWS CloudFormation Documentation](https://docs.aws.amazon.com/cloudformation/index.html)
+## Tài liệu tham khảo
+
+- [AWS CodeBuild Documentation](https://docs.aws.amazon.com/codebuild/latest/userguide/welcome.html)
 - [AWS CodePipeline Documentation](https://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html)
-- [AWS CLI User Guide](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html)
+- [AWS CloudFormation Documentation](https://docs.aws.amazon.com/cloudformation/index.html)
+- [cfn-lint](https://github.com/aws-cloudformation/cfn-lint)
+- [taskcat](https://github.com/aws-quickstart/taskcat)
